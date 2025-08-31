@@ -4877,6 +4877,7 @@ public:
   llvm::Value *EmitRISCVCpuInit();
   llvm::Value *EmitRISCVCpuIs(const CallExpr *E);
   llvm::Value *EmitRISCVCpuIs(StringRef CPUStr);
+  llvm::Value *EmitSCISABuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
   void AddAMDGPUFenceAddressSpaceMMRA(llvm::Instruction *Inst,
                                       const CallExpr *E);

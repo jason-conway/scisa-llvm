@@ -675,6 +675,14 @@ static std::string getLanaiTargetCPU(const ArgList &Args) {
   return "";
 }
 
+static std::string getSCISATargetCPU(const ArgList &Args)
+{
+    if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
+        return A->getValue();
+    }
+    return "";
+}
+
 /// Get the (LLVM) name of the WebAssembly cpu we are targeting.
 static StringRef getWebAssemblyTargetCPU(const ArgList &Args) {
   // If we have -mcpu=, use that.
@@ -759,6 +767,9 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
   case llvm::Triple::riscv32:
   case llvm::Triple::riscv64:
     return riscv::getRISCVTargetCPU(Args, T);
+
+  case llvm::Triple::scisa:
+    return getSCISATargetCPU(Args);
 
   case llvm::Triple::bpfel:
   case llvm::Triple::bpfeb:
