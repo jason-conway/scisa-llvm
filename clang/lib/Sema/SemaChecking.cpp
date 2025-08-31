@@ -72,6 +72,7 @@
 #include "clang/Sema/SemaOpenCL.h"
 #include "clang/Sema/SemaPPC.h"
 #include "clang/Sema/SemaRISCV.h"
+#include "clang/Sema/SemaSCISA.h"
 #include "clang/Sema/SemaSPIRV.h"
 #include "clang/Sema/SemaSystemZ.h"
 #include "clang/Sema/SemaWasm.h"

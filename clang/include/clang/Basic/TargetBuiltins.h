@@ -152,6 +152,16 @@ namespace clang {
   };
   } // namespace DirectX
 
+  /// SCISA builtins
+  namespace SCISA {
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+  #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+  #include "clang/Basic/BuiltinsSCISA.inc"
+    LastTSBuiltin
+  };
+  }
+
   /// SPIRV builtins
   namespace SPIRV {
   enum {

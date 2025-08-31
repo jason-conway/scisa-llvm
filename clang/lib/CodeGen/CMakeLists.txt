@@ -147,6 +147,7 @@ add_clang_library(clangCodeGen
   Targets/PNaCl.cpp
   Targets/PPC.cpp
   Targets/RISCV.cpp
+  Targets/SCISA.cpp
   Targets/SPIR.cpp
   Targets/Sparc.cpp
   Targets/SystemZ.cpp
