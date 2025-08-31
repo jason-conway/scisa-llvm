@@ -126,7 +126,7 @@ void SCISAPassConfig::addIRPasses()
 
 TargetTransformInfo SCISATargetMachine::getTargetTransformInfo(const Function &F) const
 {
-    return TargetTransformInfo(SCISATTIImpl(this, F));
+    return TargetTransformInfo(std::make_unique<SCISATTIImpl>(this, F));
 }
 
 // Install an instruction selector pass using

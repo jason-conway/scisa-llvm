@@ -664,10 +664,6 @@ SDValue SCISATargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) cons
     MachineFrameInfo &MFI = MF.getFrameInfo();
     MFI.setReturnAddressIsTaken(true);
 
-    if (verifyReturnAddressArgumentIsConstant(Op, DAG)) {
-        return SDValue();
-    }
-
     EVT VT = Op.getValueType();
     SDLoc DL(Op);
     unsigned Depth = Op.getConstantOperandVal(0);
