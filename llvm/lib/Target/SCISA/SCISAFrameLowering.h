@@ -1,0 +1,45 @@
+//===-- SCISAFrameLowering.h - Define frame lowering for SCISA -----*- C++ -*--===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This class implements SCISA-specific bits of TargetFrameLowering class.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_LIB_TARGET_SCISA_SCISAFRAMELOWERING_H
+#define LLVM_LIB_TARGET_SCISA_SCISAFRAMELOWERING_H
+
+#include "llvm/CodeGen/TargetFrameLowering.h"
+
+namespace llvm {
+class SCISASubtarget;
+
+class SCISAFrameLowering : public TargetFrameLowering {
+private:
+    void determineFrameLayout(MachineFunction &MF) const;
+
+public:
+    explicit SCISAFrameLowering(const SCISASubtarget &sti)
+        : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), 0)
+    {
+    }
+
+    void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
+    void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
+   
+    void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs, RegScavenger *RS) const override;
+
+    MachineBasicBlock::iterator eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const override
+    {
+        return MBB.erase(MI);
+    }
+
+protected:
+    bool hasFPImpl(const MachineFunction &MF) const override;
+};
+} // namespace llvm
+#endif
