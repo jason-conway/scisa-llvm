@@ -32,7 +32,7 @@ public:
         return RI;
     }
 
-    void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I, const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg, bool KillSrc, bool RenamableDest = false, bool RenamableSrc = false) const override;
+    void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I, const DebugLoc &DL, Register DestReg, Register SrcReg, bool KillSrc, bool RenamableDest = false, bool RenamableSrc = false) const override;
 
     bool expandPostRAPseudo(MachineInstr &MI) const override;
 

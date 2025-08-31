@@ -31,26 +31,6 @@ void SCISAInstPrinter::printInst(const MCInst *MI, uint64_t Address, StringRef A
     printAnnotation(O, Annot);
 }
 
-static void printExpr(const MCExpr *Expr, raw_ostream &O)
-{
-    const MCSymbolRefExpr *SRE;
-
-    if (const MCBinaryExpr *BE = dyn_cast<MCBinaryExpr>(Expr)) {
-        SRE = dyn_cast<MCSymbolRefExpr>(BE->getLHS());
-    }
-    else {
-        SRE = dyn_cast<MCSymbolRefExpr>(Expr);
-    }
-    if (!SRE) {
-        report_fatal_error("Unexpected MCExpr type.");
-    }
-
-    // MCSymbolRefExpr::VariantKind Kind = SRE->getKind();
-    // assert(Kind == MCSymbolRefExpr::VK_None);
-
-    O << *Expr;
-}
-
 void SCISAInstPrinter::printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O, const char *Modifier)
 {
     assert((Modifier == nullptr || Modifier[0] == 0) && "No modifiers supported");
@@ -63,7 +43,7 @@ void SCISAInstPrinter::printOperand(const MCInst *MI, unsigned OpNo, raw_ostream
     }
     else {
         assert(Op.isExpr() && "Expected an expression");
-        printExpr(Op.getExpr(), O);
+        MAI.printExpr(O, *Op.getExpr());
     }
 }
 
@@ -97,7 +77,9 @@ void SCISAInstPrinter::printImm32Operand(const MCInst *MI, unsigned OpNo, raw_os
         O << formatImm(Op.getImm());
     }
     else if (Op.isExpr()) {
-        O << "(" << *Op.getExpr() << ")";
+        O << "(";
+        MAI.printExpr(O, *Op.getExpr());
+        O << ")";
     }
     else {
         O << Op;
@@ -114,7 +96,7 @@ void SCISAInstPrinter::printBrTargetOperand(const MCInst *MI, unsigned OpNo, raw
         }
     }
     else if (Op.isExpr()) {
-        printExpr(Op.getExpr(), O);
+        MAI.printExpr(O, *Op.getExpr());
     }
     else {
         O << Op;

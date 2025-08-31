@@ -30,7 +30,7 @@ SCISAInstrInfo::SCISAInstrInfo()
 {
 }
 
-void SCISAInstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I, const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg, bool KillSrc, bool RenamableDest, bool RenamableSrc) const
+void SCISAInstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I, const DebugLoc &DL, Register DestReg, Register SrcReg, bool KillSrc, bool RenamableDest, bool RenamableSrc) const
 {
     assert(SCISA::GPR32RegClass.contains(DestReg, SrcReg) && "Invalid register copy");
 

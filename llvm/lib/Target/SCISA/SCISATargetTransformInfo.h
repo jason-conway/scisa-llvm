@@ -47,7 +47,7 @@ public:
     {
     }
 
-    int getIntImmCost(const APInt &Imm, Type *Ty, TTI::TargetCostKind CostKind)
+    InstructionCost getIntImmCost(const APInt &Imm, Type *Ty, TTI::TargetCostKind CostKind) const override
     {
         if (Imm.getBitWidth() <= 32 && isInt<32>(Imm.getSExtValue())) {
             return TTI::TCC_Free;
@@ -56,7 +56,7 @@ public:
         return TTI::TCC_Basic;
     }
 
-    InstructionCost getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy, CmpInst::Predicate VecPred, TTI::TargetCostKind CostKind, TTI::OperandValueInfo Op1Info = { TTI::OK_AnyValue, TTI::OP_None }, TTI::OperandValueInfo Op2Info = { TTI::OK_AnyValue, TTI::OP_None }, const llvm::Instruction *I = nullptr)
+    InstructionCost getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy, CmpInst::Predicate VecPred, TTI::TargetCostKind CostKind, TTI::OperandValueInfo Op1Info = { TTI::OK_AnyValue, TTI::OP_None }, TTI::OperandValueInfo Op2Info = { TTI::OK_AnyValue, TTI::OP_None }, const llvm::Instruction *I = nullptr) const override
     {
         if (Opcode == Instruction::Select) {
             return SCEVCheapExpansionBudget.getValue();
@@ -65,7 +65,7 @@ public:
         return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy, VecPred, CostKind, Op1Info, Op2Info, I);
     }
 
-    InstructionCost getArithmeticInstrCost(unsigned Opcode, Type *Ty, TTI::TargetCostKind CostKind, TTI::OperandValueInfo Op1Info = { TTI::OK_AnyValue, TTI::OP_None }, TTI::OperandValueInfo Op2Info = { TTI::OK_AnyValue, TTI::OP_None }, ArrayRef<const Value *> Args = {}, const Instruction *CxtI = nullptr)
+    InstructionCost getArithmeticInstrCost(unsigned Opcode, Type *Ty, TTI::TargetCostKind CostKind, TTI::OperandValueInfo Op1Info = { TTI::OK_AnyValue, TTI::OP_None }, TTI::OperandValueInfo Op2Info = { TTI::OK_AnyValue, TTI::OP_None }, ArrayRef<const Value *> Args = {}, const Instruction *CxtI = nullptr) const override
     {
         int ISD = TLI->InstructionOpcodeToISD(Opcode);
         if (ISD == ISD::ADD && CostKind == TTI::TCK_RecipThroughput) {
@@ -75,7 +75,7 @@ public:
         return BaseT::getArithmeticInstrCost(Opcode, Ty, CostKind, Op1Info, Op2Info);
     }
 
-    TTI::MemCmpExpansionOptions enableMemCmpExpansion(bool OptSize, bool IsZeroCmp) const
+    TTI::MemCmpExpansionOptions enableMemCmpExpansion(bool OptSize, bool IsZeroCmp) const override
     {
         TTI::MemCmpExpansionOptions Options;
         Options.LoadSizes = { 4, 2, 1 };
@@ -83,7 +83,7 @@ public:
         return Options;
     }
 
-    unsigned getMaxNumArgs() const
+    unsigned getMaxNumArgs() const override
     {
         return 12;
     }

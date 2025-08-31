@@ -99,8 +99,7 @@ private:
 
     void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const override;
 
-    EVT getOptimalMemOpType(const MemOp &Op, const AttributeList &FuncAttributes) const override
-    {
+    EVT getOptimalMemOpType(LLVMContext &Context, const MemOp &Op, const AttributeList &FuncAttributes) const override {
         return MVT::i32;
     }
 
