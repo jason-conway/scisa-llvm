@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/Support/Debug.h"
@@ -223,7 +224,7 @@ SDValue SCISATargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 
 SDValue SCISATargetLowering::LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg, const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const
 {
-    if (CallConv != CallingConv::C) {
+    if (CallConv != CallingConv::C && CallConv != CallingConv::Fast) {
         report_fatal_error("unimplemented calling convention: " + Twine(CallConv));
     }
 
@@ -314,7 +315,7 @@ SDValue SCISATargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI, Sm
 
     // SCISA target does not support tail call optimization.
     IsTailCall = false;
-    if (CallConv != CallingConv::C) {
+    if (CallConv != CallingConv::C && CallConv != CallingConv::Fast) {
         report_fatal_error("unsupported calling convention: " + Twine(CallConv));
     }
 
