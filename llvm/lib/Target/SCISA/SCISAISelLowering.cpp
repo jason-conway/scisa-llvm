@@ -1,4 +1,4 @@
-//===-- SCISAISelLowering.cpp - SCISA DAG Lowering Implementation  ------------===//
+//===-- SCISAISelLowering.cpp - SCISA DAG Lowering Implementation  --------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -346,9 +346,9 @@ SDValue SCISATargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI, Sm
     SmallVector<std::pair<unsigned, SDValue>, MaxArgs> RegsToPass;
 
     // Walk arg assignments
-    for (size_t i = 0; i < std::min(ArgLocs.size(), MaxArgs); ++i) {
-        CCValAssign &VA = ArgLocs[i];
-        SDValue &Arg = OutVals[i];
+    for (size_t I = 0; I < std::min(ArgLocs.size(), MaxArgs); ++I) {
+        CCValAssign &VA = ArgLocs[I];
+        SDValue &Arg = OutVals[I];
 
         // Promote the value if needed.
         switch (VA.getLocInfo()) {
@@ -397,19 +397,6 @@ SDValue SCISATargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI, Sm
     else {
         IsDirect = false;
     }
-
-#if 0
-    // If the callee is a GlobalAddress node (quite common, every direct call is)
-    // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-    // Likewise ExternalSymbol -> TargetExternalSymbol.
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-        Callee = DAG.getTargetGlobalAddress(G->getGlobal(), CLI.DL, PtrVT, G->getOffset(), 0);
-    }
-    else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-        Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT, 0);
-        fail(CLI.DL, DAG, Twine("A call to built-in function '" + StringRef(E->getSymbol()) + "' is not supported."));
-    }
-#endif
 
     // Returns a chain & a flag for retval copy to use.
     SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
@@ -467,13 +454,13 @@ SDValue SCISATargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv
     SmallVector<SDValue, 4> RetOps(1, Chain);
 
     // Copy the result values into the output registers.
-    for (size_t i = 0; i != RVLocs.size(); ++i) {
-        CCValAssign &VA = RVLocs[i];
+    for (size_t I = 0; I != RVLocs.size(); ++I) {
+        CCValAssign &VA = RVLocs[I];
         if (!VA.isRegLoc()) {
             report_fatal_error("stack return values are not supported");
         }
 
-        Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), OutVals[i], Glue);
+        Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), OutVals[I], Glue);
 
         // Guarantee that all emitted copies are stuck together,
         // avoiding something bad.
@@ -763,7 +750,7 @@ SDValue SCISATargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) co
     return getAddr(N, DAG);
 }
 
-MachineBasicBlock *SCISATargetLowering::EmitInstrWithCustomInserterMemcpy(MachineInstr &MI, MachineBasicBlock *BB) const
+MachineBasicBlock *SCISATargetLowering::emitInstrWithCustomInserterMemcpy(MachineInstr &MI, MachineBasicBlock *BB) const
 {
     MachineFunction *MF = MI.getParent()->getParent();
     MachineRegisterInfo &MRI = MF->getRegInfo();
@@ -773,7 +760,7 @@ MachineBasicBlock *SCISATargetLowering::EmitInstrWithCustomInserterMemcpy(Machin
     return BB;
 }
 
-MachineBasicBlock *SCISATargetLowering::EmitInstrWithCustomInserterSelect(MachineInstr &MI, MachineBasicBlock *BB) const
+MachineBasicBlock *SCISATargetLowering::emitInstrWithCustomInserterSelect(MachineInstr &MI, MachineBasicBlock *BB) const
 {
     const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
     DebugLoc DL = MI.getDebugLoc();
@@ -838,10 +825,10 @@ MachineBasicBlock *SCISATargetLowering::EmitInstrWithCustomInserter(MachineInstr
     unsigned Opc = MI.getOpcode();
 
     if (Opc == SCISA::MEMCPY) {
-        return EmitInstrWithCustomInserterMemcpy(MI, BB);
+        return emitInstrWithCustomInserterMemcpy(MI, BB);
     }
     if (Opc == SCISA::Select_32) {
-        return EmitInstrWithCustomInserterSelect(MI, BB);
+        return emitInstrWithCustomInserterSelect(MI, BB);
     }
     report_fatal_error("unhandled instruction type: " + Twine(Opc));
 }

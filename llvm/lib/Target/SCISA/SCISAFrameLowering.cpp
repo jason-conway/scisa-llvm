@@ -1,4 +1,4 @@
-//===-- SCISAFrameLowering.cpp - SCISA Frame Information ----------------------===//
+//===-- SCISAFrameLowering.cpp - SCISA Frame Information ------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -23,7 +23,6 @@ bool SCISAFrameLowering::hasFPImpl(const MachineFunction &MF) const
 {
     return true;
 }
-
 
 // Determines the size of the frame and maximum call frame size.
 void SCISAFrameLowering::determineFrameLayout(MachineFunction &MF) const
@@ -136,12 +135,4 @@ void SCISAFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MB
 void SCISAFrameLowering::determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs, RegScavenger *RS) const
 {
     TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
-    // SavedRegs.reset(SCISA::R16);
-    // SavedRegs.reset(SCISA::R17);
-    // SavedRegs.reset(SCISA::R18);
-    // SavedRegs.reset(SCISA::R19);
-    // SavedRegs.reset(SCISA::R20);
-    // SavedRegs.reset(SCISA::R21);
-    // SavedRegs.reset(SCISA::R22);
-    // SavedRegs.reset(SCISA::R23);
 }

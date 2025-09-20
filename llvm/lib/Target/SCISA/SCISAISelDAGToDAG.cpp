@@ -1,4 +1,4 @@
-//===-- SCISAISelDAGToDAG.cpp - A dag to dag inst selector for SCISA ----------===//
+//===-- SCISAISelDAGToDAG.cpp - A dag to dag inst selector for SCISA ------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -68,12 +68,11 @@ private:
     void Select(SDNode *N) override;
 
     // Complex Pattern for address selection.
-    bool SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
-    bool SelectFIAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
+    bool selectAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
+    bool selectFIAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
 
     // Node preprocessing cases
-    void PreprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I);
-
+    void preprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I);
 
     // Find constants from a constant structure
     typedef std::vector<unsigned char> val_vec_type;
@@ -106,7 +105,7 @@ char SCISADAGToDAGISelLegacy::ID = 0;
 INITIALIZE_PASS(SCISADAGToDAGISelLegacy, DEBUG_TYPE, PASS_NAME, false, false)
 
 // ComplexPattern used on SCISA Load/Store instructions
-bool SCISADAGToDAGISel::SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset)
+bool SCISADAGToDAGISel::selectAddr(SDValue Addr, SDValue &Base, SDValue &Offset)
 {
     // if Address is FI, get the TargetFrameIndex.
     SDLoc DL(Addr);
@@ -143,7 +142,7 @@ bool SCISADAGToDAGISel::SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset)
 }
 
 // ComplexPattern used on SCISA FI instruction
-bool SCISADAGToDAGISel::SelectFIAddr(SDValue Addr, SDValue &Base, SDValue &Offset)
+bool SCISADAGToDAGISel::selectFIAddr(SDValue Addr, SDValue &Base, SDValue &Offset)
 {
     SDLoc DL(Addr);
 
@@ -177,7 +176,7 @@ bool SCISADAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op, InlineAs
         default:
             return true;
         case InlineAsm::ConstraintCode::m: // memory
-            if (!SelectAddr(Op, Op0, Op1)) {
+            if (!selectAddr(Op, Op0, Op1)) {
                 return true;
             }
             break;
@@ -223,29 +222,30 @@ void SCISADAGToDAGISel::Select(SDNode *Node)
     SelectCode(Node);
 }
 
-void SCISADAGToDAGISel::PreprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I)
+void SCISADAGToDAGISel::preprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I)
 {
     union {
         uint8_t c[4];
         uint16_t s;
         uint32_t i;
     } new_val; // hold up the constant values replacing loads.
-    bool to_replace = false;
+    
+    bool Replace = false;
     SDLoc DL(Node);
     const LoadSDNode *LD = cast<LoadSDNode>(Node);
     if (!LD->getMemOperand()->getSize().hasValue()) {
         return;
     }
-    uint64_t size = LD->getMemOperand()->getSize().getValue();
+    uint64_t Size = LD->getMemOperand()->getSize().getValue();
 
-    if (!size || size > 4 || (size & (size - 1)) || !LD->isSimple()) {
+    if (!Size || Size > 4 || (Size & (Size - 1)) || !LD->isSimple()) {
         return;
     }
 
     SDNode *LDAddrNode = LD->getOperand(1).getNode();
     // Match LDAddr against either global_addr or (global_addr + offset)
-    unsigned opcode = LDAddrNode->getOpcode();
-    if (opcode == ISD::ADD) {
+    unsigned Op = LDAddrNode->getOpcode();
+    if (Op == ISD::ADD) {
         SDValue OP1 = LDAddrNode->getOperand(0);
         SDValue OP2 = LDAddrNode->getOperand(1);
 
@@ -260,7 +260,7 @@ void SCISADAGToDAGISel::PreprocessLoad(SDNode *Node, SelectionDAG::allnodes_iter
         const GlobalAddressSDNode *GADN = dyn_cast<GlobalAddressSDNode>(OP1N->getOperand(0).getNode());
         const ConstantSDNode *CDN = dyn_cast<ConstantSDNode>(OP2.getNode());
         if (GADN && CDN) {
-            to_replace = getConstantFieldValue(GADN, CDN->getZExtValue(), size, new_val.c);
+            Replace = getConstantFieldValue(GADN, CDN->getZExtValue(), Size, new_val.c);
         }
     }
     else if (LDAddrNode->getOpcode() > ISD::BUILTIN_OP_END && LDAddrNode->getNumOperands() > 0) {
@@ -268,25 +268,25 @@ void SCISADAGToDAGISel::PreprocessLoad(SDNode *Node, SelectionDAG::allnodes_iter
 
         SDValue OP1 = LDAddrNode->getOperand(0);
         if (const GlobalAddressSDNode *GADN = dyn_cast<GlobalAddressSDNode>(OP1.getNode())) {
-            to_replace = getConstantFieldValue(GADN, 0, size, new_val.c);
+            Replace = getConstantFieldValue(GADN, 0, Size, new_val.c);
         }
     }
 
-    if (!to_replace) {
+    if (!Replace) {
         return;
     }
 
     // replacing the old with a new value
-    uint64_t val = new_val.i;
-    if (size == 1) {
-        val = new_val.c[0];
+    uint64_t Val = new_val.i;
+    if (Size == 1) {
+        Val = new_val.c[0];
     }
-    else if (size == 2) {
-        val = new_val.s;
+    else if (Size == 2) {
+        Val = new_val.s;
     }
 
-    LLVM_DEBUG(dbgs() << "Replacing load of size " << size << " with constant " << val << '\n');
-    SDValue NVal = CurDAG->getConstant(val, DL, LD->getValueType(0));
+    LLVM_DEBUG(dbgs() << "Replacing load of size " << Size << " with constant " << Val << '\n');
+    SDValue NVal = CurDAG->getConstant(Val, DL, LD->getValueType(0));
 
     // After replacement, the current node is dead, we need to
     // go backward one step to make iterator still work
@@ -312,7 +312,7 @@ void SCISADAGToDAGISel::PreprocessISelDAG()
         SDNode *Node = &*I++;
         unsigned Opcode = Node->getOpcode();
         if (Opcode == ISD::LOAD) {
-            PreprocessLoad(Node, I);
+            preprocessLoad(Node, I);
         }
     }
 }
@@ -329,23 +329,23 @@ bool SCISADAGToDAGISel::getConstantFieldValue(const GlobalAddressSDNode *Node, u
     const DataLayout &DL = CurDAG->getDataLayout();
     val_vec_type TmpVal;
 
-    auto it = cs_vals_.find(static_cast<const void *>(Init));
-    if (it != cs_vals_.end()) {
-        TmpVal = it->second;
+    auto IT = cs_vals_.find(static_cast<const void *>(Init));
+    if (IT != cs_vals_.end()) {
+        TmpVal = IT->second;
     }
     else {
-        uint64_t total_size = 0;
+        uint64_t TotalSize = 0;
         if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
-            total_size = DL.getStructLayout(cast<StructType>(CS->getType()))->getSizeInBytes();
+            TotalSize = DL.getStructLayout(cast<StructType>(CS->getType()))->getSizeInBytes();
         }
         else if (const ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
-            total_size = DL.getTypeAllocSize(CA->getType()->getElementType()) * CA->getNumOperands();
+            TotalSize = DL.getTypeAllocSize(CA->getType()->getElementType()) * CA->getNumOperands();
         }
         else {
             return false;
         }
 
-        val_vec_type Vals(total_size, 0);
+        val_vec_type Vals(TotalSize, 0);
         if (fillGenericConstant(DL, Init, Vals, 0) == false) {
             return false;
         }
@@ -369,8 +369,8 @@ bool SCISADAGToDAGISel::fillGenericConstant(const DataLayout &DL, const Constant
     }
 
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-        uint64_t val = CI->getZExtValue();
-        LLVM_DEBUG(dbgs() << "Byte array at offset " << Offset << " with value " << val << '\n');
+        uint64_t Val = CI->getZExtValue();
+        LLVM_DEBUG(dbgs() << "Byte array at offset " << Offset << " with value " << Val << '\n');
 
         if (Size > 4 || (Size & (Size - 1))) {
             return false;
@@ -378,7 +378,7 @@ bool SCISADAGToDAGISel::fillGenericConstant(const DataLayout &DL, const Constant
 
         // Store based on target endian
         for (uint64_t I = 0; I < Size; ++I) {
-            Vals[Offset + I] = DL.isLittleEndian() ? ((val >> (I * 4)) & 0xFF) : ((val >> ((Size - I - 1) * 4)) & 0xFF);
+            Vals[Offset + I] = DL.isLittleEndian() ? ((Val >> (I * 4)) & 0xFF) : ((Val >> ((Size - I - 1) * 4)) & 0xFF);
         }
         return true;
     }

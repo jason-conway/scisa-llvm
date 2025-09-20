@@ -1,4 +1,4 @@
-//===------ SCISATargetTransformInfo.h - SCISA specific TTI ---------*- C++ -*-===//
+//===------ SCISATargetTransformInfo.h - SCISA specific TTI -----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -52,7 +52,6 @@ public:
         if (Imm.getBitWidth() <= 32 && isInt<32>(Imm.getSExtValue())) {
             return TTI::TCC_Free;
         }
-
         return TTI::TCC_Basic;
     }
 
@@ -61,7 +60,6 @@ public:
         if (Opcode == Instruction::Select) {
             return SCEVCheapExpansionBudget.getValue();
         }
-
         return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy, VecPred, CostKind, Op1Info, Op2Info, I);
     }
 
@@ -71,7 +69,6 @@ public:
         if (ISD == ISD::ADD && CostKind == TTI::TCK_RecipThroughput) {
             return SCEVCheapExpansionBudget.getValue() + 1;
         }
-
         return BaseT::getArithmeticInstrCost(Opcode, Ty, CostKind, Op1Info, Op2Info);
     }
 

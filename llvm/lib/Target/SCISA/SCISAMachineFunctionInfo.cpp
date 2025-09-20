@@ -1,4 +1,4 @@
-//===-- SCISAMachineFunctionInfo.cpp - SCISA Machine Function Info ------*- C++ -*-===//
+//===-- SCISAMachineFunctionInfo.cpp - Machine Function Info ----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.

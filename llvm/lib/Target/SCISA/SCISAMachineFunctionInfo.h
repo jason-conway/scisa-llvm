@@ -1,4 +1,4 @@
-//===-- SCISAMachineFuctionInfo.h - SCISA machine function info -----*- C++ -*-===//
+//===-- SCISAMachineFuctionInfo.h - SCISA machine function info -*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -35,7 +35,7 @@ class SCISAMachineFunctionInfo : public MachineFunctionInfo {
     unsigned SRetReturnReg;
 
     /// index where call saves PC and status word
-    int call_ret_idx;
+    int CallRetIdx;
 
     /// VarArgsFrameOffset - offset for start of varargs area.
     int VarArgsFrameOffset;
@@ -68,29 +68,29 @@ public:
 
     int getCallRetIdx() const
     {
-        return call_ret_idx;
+        return CallRetIdx;
     }
-    void setCallRetIdx(int i)
+    void setCallRetIdx(int Idx)
     {
-        call_ret_idx = i;
+        CallRetIdx = Idx;
     }
 
     int getVarArgsFrameOffset() const
     {
         return VarArgsFrameOffset;
     }
-    void setVarArgsFrameOffset(int off)
+    void setVarArgsFrameOffset(int Off)
     {
-        VarArgsFrameOffset = off;
+        VarArgsFrameOffset = Off;
     }
 
     int getVarArgsFrameIndex() const
     {
         return VarArgsFrameIndex;
     }
-    void setVarArgsFrameIndex(int idx)
+    void setVarArgsFrameIndex(int Idx)
     {
-        VarArgsFrameIndex = idx;
+        VarArgsFrameIndex = Idx;
     }
 
     unsigned getSRetReturnReg() const

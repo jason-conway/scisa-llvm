@@ -77,10 +77,6 @@ void SCISAAsmPrinter::printOperand(const MachineInstr *MI, int OpNum, raw_ostrea
             O << *MO.getMBB()->getSymbol();
             break;
 
-        // case MachineOperand::MO_GlobalAddress:
-        //     PrintSymbolOperand(MO, O);
-        //     break;
-
         case MachineOperand::MO_GlobalAddress:
             O << *getSymbol(MO.getGlobal());
             break;
@@ -149,7 +145,7 @@ void SCISAAsmPrinter::emitInstruction(const MachineInstr *MI)
 
     MCInst TmpInst;
     SCISAMCInstLower MCInstLowering(OutContext, *this);
-    MCInstLowering.Lower(MI, TmpInst);
+    MCInstLowering.lower(MI, TmpInst);
     EmitToStreamer(*OutStreamer, TmpInst);
 }
 
