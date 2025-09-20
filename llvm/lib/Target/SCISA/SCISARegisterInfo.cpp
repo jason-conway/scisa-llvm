@@ -1,4 +1,4 @@
-//===-- SCISARegisterInfo.cpp - SCISA Register Information ----------*- C++ -*-===//
+//===-- SCISARegisterInfo.cpp - SCISA Register Information ------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -49,7 +49,6 @@ BitVector SCISARegisterInfo::getReservedRegs(const MachineFunction &MF) const
     markSuperRegs(Reserved, SCISA::LR);
     markSuperRegs(Reserved, SCISA::CC);
     markSuperRegs(Reserved, SCISA::CYC);
-    // markSuperRegs(Reserved, SCISA::PC);
     return Reserved;
 }
 
@@ -58,38 +57,37 @@ const TargetRegisterClass *SCISARegisterInfo::getPointerRegClass(const MachineFu
     return &SCISA::GPR32RegClass;
 }
 
-
 bool SCISARegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, unsigned FIOperandNum, RegScavenger *RS) const
 {
     assert(SPAdj == 0 && "Unexpected");
 
-    unsigned i = 0;
+    unsigned I = 0;
     MachineInstr &MI = *II;
     MachineBasicBlock &MBB = *MI.getParent();
     MachineFunction &MF = *MBB.getParent();
     DebugLoc DL = MI.getDebugLoc();
 
-    while (!MI.getOperand(i).isFI()) {
-        ++i;
+    while (!MI.getOperand(I).isFI()) {
+        ++I;
         assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
     }
 
     Register FrameReg = getFrameRegister(MF);
-    int FrameIndex = MI.getOperand(i).getIndex();
+    int FrameIndex = MI.getOperand(I).getIndex();
     const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
 
     if (MI.getOpcode() == SCISA::MOV_rr_32) {
         int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
 
-        MI.getOperand(i).ChangeToRegister(FrameReg, false);
-        Register reg = MI.getOperand(i - 1).getReg();
-        BuildMI(MBB, ++II, DL, TII.get(SCISA::ADD_ri_32), reg)
-            .addReg(reg)
+        MI.getOperand(I).ChangeToRegister(FrameReg, false);
+        Register Reg = MI.getOperand(I - 1).getReg();
+        BuildMI(MBB, ++II, DL, TII.get(SCISA::ADD_ri_32), Reg)
+            .addReg(Reg)
             .addImm(Offset);
         return false;
     }
 
-    int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex) + MI.getOperand(i + 1).getImm();
+    int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex) + MI.getOperand(I + 1).getImm();
 
     if (!isInt<32>(Offset)) {
         llvm_unreachable("bug in frame offset");
@@ -99,20 +97,20 @@ bool SCISARegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int 
         // architecture does not really support FI_ri, replace it with
         //    MOV_rr <target_reg>, frame_reg
         //    ADD_ri <target_reg>, imm
-        Register reg = MI.getOperand(i - 1).getReg();
+        Register Reg = MI.getOperand(I - 1).getReg();
 
-        BuildMI(MBB, ++II, DL, TII.get(SCISA::MOV_rr_32), reg)
+        BuildMI(MBB, ++II, DL, TII.get(SCISA::MOV_rr_32), Reg)
             .addReg(FrameReg);
-        BuildMI(MBB, II, DL, TII.get(SCISA::ADD_ri_32), reg)
-            .addReg(reg)
+        BuildMI(MBB, II, DL, TII.get(SCISA::ADD_ri_32), Reg)
+            .addReg(Reg)
             .addImm(Offset);
 
         // Remove FI_ri instruction
         MI.eraseFromParent();
     }
     else {
-        MI.getOperand(i).ChangeToRegister(FrameReg, false);
-        MI.getOperand(i + 1).ChangeToImmediate(Offset);
+        MI.getOperand(I).ChangeToRegister(FrameReg, false);
+        MI.getOperand(I + 1).ChangeToImmediate(Offset);
     }
     return false;
 }

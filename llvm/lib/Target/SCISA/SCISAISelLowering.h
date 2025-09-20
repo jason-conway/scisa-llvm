@@ -1,4 +1,4 @@
-//===-- SCISAISelLowering.h - SCISA DAG Lowering Interface ----------*- C++ -*-===//
+//===-- SCISAISelLowering.h - SCISA DAG Lowering Interface ------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -120,8 +120,8 @@ private:
 
     bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty, unsigned AS, Instruction *I = nullptr) const override;
 
-    MachineBasicBlock *EmitInstrWithCustomInserterMemcpy(MachineInstr &MI, MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitInstrWithCustomInserterSelect(MachineInstr &MI, MachineBasicBlock *BB) const;
+    MachineBasicBlock *emitInstrWithCustomInserterMemcpy(MachineInstr &MI, MachineBasicBlock *BB) const;
+    MachineBasicBlock *emitInstrWithCustomInserterSelect(MachineInstr &MI, MachineBasicBlock *BB) const;
 };
 
 } // namespace llvm

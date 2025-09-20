@@ -1,4 +1,4 @@
-//===-- SCISAInstrInfo.td - Target Description for SCISA Target ---------------===//
+//===-- SCISAInstrInfo.td - Target Description for SCISA Target -----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -159,13 +159,11 @@ def SCISAWrapper : SDNode<
   SDT_SCISAWrapper
 >;
 
-
 def SCISAmemcpy : SDNode<
   "SCISAISD::MEMCPY",
   SDT_SCISAMEMCPY,
   [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore, SDNPMayLoad]
 >;
-
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -197,7 +195,7 @@ def imm_to_i32 : SDNodeXForm<
 def ADDRri32 : ComplexPattern<
   i32,
   2,
-  "SelectAddr",
+  "selectAddr",
   [],
   []
 >;
@@ -205,7 +203,7 @@ def ADDRri32 : ComplexPattern<
 def FIri32 : ComplexPattern<
   i32,
   2,
-  "SelectFIAddr",
+  "selectFIAddr",
   [add, or],
   []
 >;
@@ -400,7 +398,6 @@ def LD_imm32 : InstSCISA<
   [(set GPR32:$rd, (i32 imm:$imm))]
 >;
 
-
 let isPseudo = 1 in {
   def FI_ri32 : InstSCISA<
     (outs GPR32:$rd),
@@ -464,7 +461,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   }
 }
 
-
 let isCall = 1, isBarrier = 1, Defs = [LR], Uses = [SP] in {
   // branch & link (call)
   def BL : InstSCISA<
@@ -487,9 +483,6 @@ let isCall = 1, isBarrier = 1, Defs = [LR], Uses = [SP] in {
 
 def : Pat<(SCISAcall tglobaladdr:$dst),  (BL tglobaladdr:$dst)>;
 def : Pat<(SCISAcall texternalsym:$dst), (BL texternalsym:$dst)>;
-
-// def : Pat<(SCISAcall imm:$dst), (BL imm:$dst)>;
-// def : Pat<(SCISAindirectcall GPR32:$dst), (BLR GPR32:$dst)>;
 
 // I don't *think* `LR` needs included in Defs since `RET` only reads it
 // TODO: confirm and remove comment

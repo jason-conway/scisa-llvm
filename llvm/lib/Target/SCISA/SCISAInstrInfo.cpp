@@ -1,4 +1,4 @@
-//===-- SCISAInstrInfo.cpp - SCISA Instruction Information ----------*- C++ -*-===//
+//===-- SCISAInstrInfo.cpp - SCISA Instruction Information ------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -279,9 +279,7 @@ unsigned SCISAInstrInfo::removeBranch(MachineBasicBlock &MBB, int *BytesRemoved)
         if (I->isDebugInstr()) {
             continue;
         }
-        bool Done = I->getOpcode() != SCISA::B &&
-                    I->getOpcode() != SCISA::BCC &&
-                    I->getOpcode() != SCISA::BR;
+        bool Done = I->getOpcode() != SCISA::B && I->getOpcode() != SCISA::BCC && I->getOpcode() != SCISA::BR;
         if (Done) {
             break;
         }

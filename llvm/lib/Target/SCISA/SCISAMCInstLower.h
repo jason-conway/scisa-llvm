@@ -1,4 +1,4 @@
-//===-- SCISAMCInstLower.h - Lower MachineInstr to MCInst ---------*- C++ -*-===//
+//===-- SCISAMCInstLower.h - Lower MachineInstr to MCInst -------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -28,17 +28,17 @@ class LLVM_LIBRARY_VISIBILITY SCISAMCInstLower {
     AsmPrinter &Printer;
 
 public:
-    SCISAMCInstLower(MCContext &ctx, AsmPrinter &printer)
-        : Ctx(ctx),
-          Printer(printer)
+    SCISAMCInstLower(MCContext &Ctx, AsmPrinter &Printer)
+        : Ctx(Ctx),
+          Printer(Printer)
     {
     }
-    void Lower(const MachineInstr *MI, MCInst &OutMI) const;
+    void lower(const MachineInstr *MI, MCInst &OutMI) const;
 
-    MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
+    MCOperand lowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
 
-    MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO) const;
-    MCSymbol *GetExternalSymbolSymbol(const MachineOperand &MO) const;
+    MCSymbol *getGlobalAddressSymbol(const MachineOperand &MO) const;
+    MCSymbol *getExternalSymbolSymbol(const MachineOperand &MO) const;
 };
 
 } // namespace llvm

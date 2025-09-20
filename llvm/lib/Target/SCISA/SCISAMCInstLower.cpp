@@ -1,4 +1,4 @@
-//=-- SCISAMCInstLower.cpp - Convert SCISA MachineInstr to an MCInst ------------=//
+//=-- SCISAMCInstLower.cpp - Convert SCISA MachineInstr to an MCInst --------=//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -23,17 +23,17 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-MCSymbol *SCISAMCInstLower::GetGlobalAddressSymbol(const MachineOperand &MO) const
+MCSymbol *SCISAMCInstLower::getGlobalAddressSymbol(const MachineOperand &MO) const
 {
     return Printer.getSymbol(MO.getGlobal());
 }
 
-MCSymbol *SCISAMCInstLower::GetExternalSymbolSymbol(const MachineOperand &MO) const
+MCSymbol *SCISAMCInstLower::getExternalSymbolSymbol(const MachineOperand &MO) const
 {
     return Printer.GetExternalSymbolSymbol(MO.getSymbolName());
 }
 
-MCOperand SCISAMCInstLower::LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const
+MCOperand SCISAMCInstLower::lowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const
 {
     const MCExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
 
@@ -44,7 +44,7 @@ MCOperand SCISAMCInstLower::LowerSymbolOperand(const MachineOperand &MO, MCSymbo
     return MCOperand::createExpr(Expr);
 }
 
-void SCISAMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const
+void SCISAMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const
 {
     OutMI.setOpcode(MI->getOpcode());
 
@@ -71,13 +71,13 @@ void SCISAMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const
             case MachineOperand::MO_RegisterMask:
                 continue;
             case MachineOperand::MO_ExternalSymbol:
-                MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
+                MCOp = lowerSymbolOperand(MO, getExternalSymbolSymbol(MO));
                 break;
             case MachineOperand::MO_GlobalAddress:
-                MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
+                MCOp = lowerSymbolOperand(MO, getGlobalAddressSymbol(MO));
                 break;
             case MachineOperand::MO_ConstantPoolIndex:
-                MCOp = LowerSymbolOperand(MO, Printer.GetCPISymbol(MO.getIndex()));
+                MCOp = lowerSymbolOperand(MO, Printer.GetCPISymbol(MO.getIndex()));
                 break;
         }
 
