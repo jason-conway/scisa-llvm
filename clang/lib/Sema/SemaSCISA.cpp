@@ -27,4 +27,36 @@ SemaSCISA::SemaSCISA(Sema &S)
 {
 }
 
+bool SemaSCISA::CheckSCISABuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID, CallExpr *Call)
+{
+    ASTContext &Context = getASTContext();
+    switch (BuiltinID) {
+        case SCISA::BI__builtin_scisa_in:
+        case SCISA::BI__builtin_scisa_out: {
+            if (SemaRef.checkArgCount(Call, 2)) {
+                return true;
+            }
+
+            Expr *Arg0 = Call->getArg(0);
+            Expr *Arg1 = Call->getArg(1);
+
+            ExprResult FirstArg = SemaRef.DefaultFunctionArrayLvalueConversion(Arg0);
+            if (FirstArg.isInvalid()) {
+                return true;
+            }
+            QualType Arg1Type = FirstArg.get()->getType();
+            if (!Arg1Type->isAnyPointerType()) {
+                return Diag(Call->getBeginLoc(), diag::err_attribute_argument_type) << "first" << Arg1Type << Arg0->getSourceRange();
+            }
+            QualType Arg2Type = Arg1->getType();
+            if (!Arg2Type->isIntegerType()) {
+                return Diag(Call->getBeginLoc(), diag::err_attribute_argument_type) << "second" << Arg2Type << Arg1->getSourceRange();
+            }
+            Call->setType(BuiltinID == SCISA::BI__builtin_scisa_in ? Context.IntTy : Context.VoidTy);
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace clang

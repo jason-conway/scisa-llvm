@@ -122,6 +122,8 @@ static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
   case llvm::Triple::riscv32:
   case llvm::Triple::riscv64:
     return CGF->EmitRISCVBuiltinExpr(BuiltinID, E, ReturnValue);
+  case llvm::Triple::scisa:
+    return CGF->EmitSCISABuiltinExpr(BuiltinID, E);
   case llvm::Triple::spirv32:
   case llvm::Triple::spirv64:
     if (CGF->getTarget().getTriple().getOS() == llvm::Triple::OSType::AMDHSA)

@@ -23,6 +23,7 @@ class ParsedAttr;
 class SemaSCISA : public SemaBase {
 public:
     SemaSCISA(Sema &S);
+    bool CheckSCISABuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID, CallExpr *Call);
 };
 
 } // namespace clang
