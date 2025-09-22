@@ -219,14 +219,12 @@ def MEMri32 : Operand<i32> {
 def cmov : PatFrag<(ops node:$op1, node:$op2, node:$cc), (SCISAcmov $op1, $op2, $cc)>;
 
 let Constraints = "$rd = $rs2", Uses = [CC] in {
-
   def CMOV_rr : InstSCISA<
     (outs GPR32:$rd),
     (ins GPR32:$rs, GPR32:$rs2, cc:$cond),
     "mov$cond\t$rd, $rs",
     [(set GPR32:$rd, (cmov i32:$rs, i32:$rs2, imm:$cond))]
   >;
-
   def CMOV_ri : InstSCISA<
     (outs GPR32:$rd),
     (ins GPR32:$rs2, i32imm:$imm, cc:$cond),
@@ -239,14 +237,12 @@ let Constraints = "$rd = $rs2", Uses = [CC] in {
 
 let isBranch = 1, isTerminator = 1 in {
   let Uses = [CC] in {
-
     def BCC : InstSCISA<
       (outs),
       (ins brtarget:$BrDst, cc:$cond),
       "b$cond\t$BrDst",
       [(SCISAbrcc bb:$BrDst, imm:$cond)]
     >;
-
   } // Uses = [CC]
 } // isBranch = 1, isTerminator = 1
 
@@ -278,7 +274,7 @@ let isCompare = 1, Defs = [CC] in {
   >;
 } // isCompare = 1, Defs = [CC]
 
-// MARK: - ALU
+// MARK: - alu
 
 multiclass ALU<string OpcodeStr, SDNode OpNode> {
   def _rr_32 : InstSCISA<
@@ -338,7 +334,7 @@ let Constraints = "$rd = $rs", isAsCheapAsAMove = 1 in {
   >;
 } // Constraints = "$rd = $rs2", isAsCheapAsAMove = 1
 
-// MARK: - MOV
+// MARK: - mov
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, hasSideEffects = 0 in {
   def MOV_rr_32 : InstSCISA<
@@ -413,14 +409,33 @@ let mayStore = 1 in {
   >;
 } // mayStore = 1
 
-
 def : Pat<(store (i32 imm:$src), ADDRri32:$dst), (STW_imm32 (imm_to_i32 $src), ADDRri32:$dst)>;
 
 def : Pat<(truncstorei16 (i32 imm:$src), ADDRri32:$dst), (STH_imm32 (imm_to_i32 imm:$src), ADDRri32:$dst)>;
 
 def : Pat<(truncstorei8 (i32 imm:$src), ADDRri32:$dst), (STB_imm32 (imm_to_i32 imm:$src), ADDRri32:$dst)>;
 
-// MARK: - branches
+// MARK: - I/O
+
+let hasSideEffects = 1, mayStore = 1 in {
+  def IN_rr : InstSCISA<
+    (outs GPR32:$res),
+    (ins GPR32:$rd, GPR32:$rs),
+    "in\t($rd), $rs",
+    [(set GPR32:$res, (int_scisa_in GPR32:$rd, GPR32:$rs))]
+  >;
+} // hasSideEffects = 1, mayStore = 1
+
+let hasSideEffects = 1, mayLoad = 1, usesCustomInserter = 0 in {
+  def OUT_rr : InstSCISA<
+    (outs),
+    (ins GPR32:$rd, GPR32:$rs),
+    "out\t($rd), $rs",
+    [(int_scisa_out GPR32:$rd, GPR32:$rs)]
+  >;
+} // hasSideEffects = 1, mayLoad = 1, usesCustomInserter = 0
+
+// MARK: - branching
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   // unconditional branch
@@ -465,6 +480,8 @@ let isCall = 1, isBarrier = 1, Defs = [LR], Uses = [SP] in {
 def : Pat<(SCISAcall tglobaladdr:$dst),  (BL tglobaladdr:$dst)>;
 def : Pat<(SCISAcall texternalsym:$dst), (BL texternalsym:$dst)>;
 
+// MARK: - ret
+
 // I don't *think* `LR` needs included in Defs since `RET` only reads it
 // TODO: confirm and remove comment
 let Defs = [SP], Uses = [SP, LR] in {
@@ -477,6 +494,8 @@ let Defs = [SP], Uses = [SP, LR] in {
     >;
   } // isReturn = 1, isTerminator = 1, isBarrier = 1, isNotDuplicable = 1
 } // Defs = [SP], Uses = [SP, LR]
+
+// MARK: - ADJCALLSTACKDOWN/UP
 
 // ADJCALLSTACKDOWN/UP pseudo insns
 let Defs = [SP], Uses = [SP] in {
@@ -495,6 +514,8 @@ let Defs = [SP], Uses = [SP] in {
     [(SCISAcallseq_end timm:$amt1, timm:$amt2)]
   >;
 } // Defs = [SP], Uses = [SP]
+
+// MARK: - select
 
 let usesCustomInserter = 1 in {
   def Select_32 : Pseudo<
@@ -576,7 +597,6 @@ def : Pat<(i32 (extloadi8 ADDRri32:$src)), (i32 (LDUB32 ADDRri32:$src))>;
 
 def : Pat<(i32 (extloadi16 ADDRri32:$src)), (i32 (LDUH32 ADDRri32:$src))>;
 
-
 // MARK: - push/pop
 
 let Defs = [SP], Uses = [SP], hasSideEffects = 0 in {
@@ -598,6 +618,8 @@ let Defs = [SP], Uses = [SP], hasSideEffects = 0 in {
       []>;
   } // mayLoad = 1
 } // Defs = [SP], Uses = [SP], hasSideEffects = 0
+
+// MARK: - memcpy
 
 let usesCustomInserter = 1 in {
   def MEMCPY : Pseudo<

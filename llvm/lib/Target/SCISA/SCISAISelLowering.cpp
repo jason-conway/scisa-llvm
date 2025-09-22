@@ -16,6 +16,7 @@
 #include "SCISASubtarget.h"
 #include "SCISATargetObjectFile.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -26,15 +27,14 @@
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/IntrinsicsSCISA.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
-#define DEBUG_TYPE "scisa-lower"
-
-static cl::opt<bool> SCISAExpandMemcpyInOrder("scisa-expand-memcpy-in-order", cl::Hidden, cl::init(false), cl::desc("Expand memcpy into load/store pairs in order"));
+#define DEBUG_TYPE "scisa-lowering"
 
 static void fail(const SDLoc &DL, SelectionDAG &DAG, const Twine &Msg, SDValue Val = {})
 {
@@ -86,15 +86,12 @@ SCISATargetLowering::SCISATargetLowering(const TargetMachine &TM, const SCISASub
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
 
-    // setOperationAction(ISD::SETCC, MVT::i8, Promote);
-    // setOperationAction(ISD::SETCC, MVT::i16, Promote);
     setOperationAction(ISD::SETCC, MVT::i32, Custom);
 
     setOperationAction(ISD::SELECT, MVT::i32, Expand);
 
     setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
     setOperationAction(ISD::BR_CC, MVT::i32, Custom);
-
 
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
@@ -103,7 +100,6 @@ SCISATargetLowering::SCISATargetLowering(const TargetMachine &TM, const SCISASub
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Expand);
 
-    // Extended load operations for i1 types must be promoted
     for (MVT VT : MVT::integer_valuetypes()) {
         setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
         setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
@@ -129,7 +125,7 @@ SCISATargetLowering::SCISATargetLowering(const TargetMachine &TM, const SCISASub
         MaxStoresPerMemmoveOptSize = 0;
         MaxLoadsPerMemcmp = 0;
 #else
-        // inline memcpy() for kernel to see explicit copy
+
         unsigned CommonMaxStores = STI.getSelectionDAGInfo()->getCommonMaxStoresPerMemFunc();
 
         MaxStoresPerMemsetOptSize = CommonMaxStores;
@@ -666,7 +662,6 @@ SDValue SCISATargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) cons
     return DAG.getCopyFromReg(DAG.getEntryNode(), DL, Reg, VT);
 }
 
-
 SDValue SCISATargetLowering::LowerSTACKSAVE(SDValue Op, SelectionDAG &DAG) const
 {
     return DAG.getCopyFromReg(Op.getOperand(0), SDLoc(Op), SCISA::SP, Op.getValueType());
@@ -857,4 +852,3 @@ bool SCISATargetLowering::isLegalAddressingMode(const DataLayout &DL, const Addr
 
     return true;
 }
-

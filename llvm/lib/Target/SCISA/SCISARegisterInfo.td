@@ -74,8 +74,5 @@ def GPR32 : RegisterClass<"SCISA", [i32], 32, (add
 )>;
 
 def PCREG : RegisterClass<"SCISA", [i32], 32, (add PC)>;
-def SPREG : RegisterClass<"SCISA", [i32], 32, (add SP)>;
-def FPREG : RegisterClass<"SCISA", [i32], 32, (add FP)>;
-def LRREG : RegisterClass<"SCISA", [i32], 32, (add LR)>;
 def CCREG : RegisterClass<"SCISA", [i32], 32, (add CC)>;
 def CYCREG : RegisterClass<"SCISA", [i32], 32, (add CYC)>;

@@ -20,6 +20,8 @@
 #include <cassert>
 #include <iterator>
 
+#define DEBUG_TYPE "scisa-instr-info"
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "SCISAGenInstrInfo.inc"
 
