@@ -14,7 +14,6 @@ add_public_tablegen_target(SCISACommonTableGen)
 
 add_llvm_target(SCISACodeGen
   SCISAAsmPrinter.cpp
-  SCISAASpaceCastSimplifyPass.cpp
   SCISAFrameLowering.cpp
   SCISAInstrInfo.cpp
   SCISAISelDAGToDAG.cpp
@@ -37,7 +36,6 @@ add_llvm_target(SCISACodeGen
   Core
   IPO
   MC
-  Passes
   Scalar
   SelectionDAG
   Support

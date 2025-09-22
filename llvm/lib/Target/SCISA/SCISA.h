@@ -59,16 +59,6 @@ public:
     }
 };
 
-class SCISAASpaceCastSimplifyPass : public PassInfoMixin<SCISAASpaceCastSimplifyPass> {
-public:
-    PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
-
-    static bool isRequired()
-    {
-        return true;
-    }
-};
-
 } // namespace llvm
 
 #endif

@@ -370,26 +370,7 @@ let Uses = [CYC] in {
 
 def: Pat<(i32 readcyclecounter), (READ_REG CYC) >;
 
-def ADDR_SPACE_CAST32 : InstSCISA<
-  (outs GPR32:$rd),
-  (ins GPR32:$rs, i32imm:$rd_as, i32imm:$src_as),
-  "$rd = addr_space_cast($rs, $rd_as, $src_as)",
-  []
->;
-
-def SrcAddrSpace32 : SDNodeXForm<
-  addrspacecast,
-  [{ return CurDAG->getTargetConstant(cast<AddrSpaceCastSDNode>(N)->getSrcAddressSpace(), SDLoc(N), MVT::i32); }]
->;
-
-def DstAddrSpace32 : SDNodeXForm<
-  addrspacecast,
-  [{ return CurDAG->getTargetConstant(cast<AddrSpaceCastSDNode>(N)->getDestAddressSpace(), SDLoc(N), MVT::i32); }]
->;
-
-def : Pat<(addrspacecast:$this GPR32:$rs), (ADDR_SPACE_CAST32 $rs, (DstAddrSpace32 $this), (SrcAddrSpace32 $this))>;
-
-// MARK: - LEA
+// MARK: - lea
 
 def LD_imm32 : InstSCISA<
   (outs GPR32:$rd),
