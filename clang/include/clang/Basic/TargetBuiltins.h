@@ -156,11 +156,12 @@ namespace clang {
   namespace SCISA {
   enum {
     LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
-  #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#define GET_BUILTIN_ENUMERATORS
   #include "clang/Basic/BuiltinsSCISA.inc"
+#undef GET_BUILTIN_ENUMERATORS
     LastTSBuiltin
   };
-  }
+  } // namespace SCISA
 
   /// SPIRV builtins
   namespace SPIRV {

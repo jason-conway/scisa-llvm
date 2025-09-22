@@ -26,27 +26,32 @@ public:
     SCISATargetInfo(const llvm::Triple &Triple, const TargetOptions &)
         : TargetInfo(Triple)
     {
-        LongWidth = 32;
-        LongAlign = 32;
-        PointerWidth = 32;
-        PointerAlign = 32;
-        SizeType = UnsignedLong;
-        PtrDiffType = SignedLong;
-        IntPtrType = SignedLong;
-        IntMaxType = SignedLong;
-        Int64Type = SignedLong;
-        RegParmMax = 8;
-        resetDataLayout("e-m:e-p:32:32-i32:32-a:0:32-n32-S32");
-        MaxAtomicPromoteWidth = 0;
-        MaxAtomicInlineWidth = 0;
+        this->LongWidth = 32;
+        this->LongAlign = 32;
+        this->PointerWidth = 32;
+        this->PointerAlign = 32;
 
-        TLSSupported = false;
-        BigEndian = false;
-        VLASupported = false;
-        HasFloat128 = false;
-        HasFloat16 = false;
-        HasBFloat16 = false;
-        HasFullBFloat16 = false;
+        this->SizeType = TargetInfo::UnsignedInt;
+        this->PtrDiffType = TargetInfo::SignedInt;
+        this->IntPtrType = TargetInfo::SignedInt;
+
+        this->IntMaxType = TargetInfo::SignedLongLong;
+        this->Int64Type = TargetInfo::SignedLongLong;
+
+        this->NoAsmVariants = true;
+        this->HasLongDouble = false;
+        this->LongLongAlign = 32;
+        this->SuitableAlign = 32;
+        this->UseZeroLengthBitfieldAlignment = true;
+
+        resetDataLayout("e-m:e-p:32:32-i8:8:8-i16:16:16-i32:32-i64:32-a:0:32-n32-S32");
+
+        this->MaxAtomicPromoteWidth = 0;
+        this->MaxAtomicInlineWidth = 0;
+
+        this->TLSSupported = false;
+        this->BigEndian = false;
+        this->VLASupported = false;
     }
 
     void getTargetDefines(const LangOptions &Opts, MacroBuilder &Builder) const override;
@@ -62,15 +67,12 @@ public:
     }
     bool handleTargetFeatures(std::vector<std::string> &Features, DiagnosticsEngine &Diags) override;
 
-    llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override
-    {
-        return {};
-    }
-
     std::string_view getClobbers() const override
     {
         return "";
     }
+
+    llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override;
 
     BuiltinVaListKind getBuiltinVaListKind() const override
     {

@@ -19,6 +19,21 @@
 using namespace clang;
 using namespace clang::targets;
 
+static constexpr int NumBuiltins =
+    clang::SCISA::LastTSBuiltin - Builtin::FirstTSBuiltin;
+
+#define GET_BUILTIN_STR_TABLE
+#include "clang/Basic/BuiltinsSCISA.inc"
+#undef GET_BUILTIN_STR_TABLE
+
+static constexpr Builtin::Info BuiltinInfos[] = {
+#define GET_BUILTIN_INFOS
+#include "clang/Basic/BuiltinsSCISA.inc"
+#undef GET_BUILTIN_INFOS
+};
+
+static_assert(std::size(BuiltinInfos) == NumBuiltins);
+
 void SCISATargetInfo::getTargetDefines(const LangOptions &Opts, MacroBuilder &Builder) const
 {
     Builder.defineMacro("__SCISA__");
@@ -48,4 +63,9 @@ void SCISATargetInfo::fillValidCPUList(SmallVectorImpl<StringRef> &Values) const
 bool SCISATargetInfo::handleTargetFeatures(std::vector<std::string> &Features, DiagnosticsEngine &Diags)
 {
     return true;
+}
+
+llvm::SmallVector<Builtin::InfosShard> SCISATargetInfo::getTargetBuiltins() const
+{
+    return {{&BuiltinStrings, BuiltinInfos}};
 }
