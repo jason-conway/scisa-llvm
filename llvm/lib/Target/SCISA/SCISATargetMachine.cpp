@@ -33,8 +33,6 @@
 #include <optional>
 using namespace llvm;
 
-static cl::opt<bool> DisableMIPeephole("disable-scisa-peephole", cl::Hidden, cl::desc("Disable machine peepholes for SCISA"));
-
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSCISATarget()
 {
     // Register the target.
@@ -47,7 +45,16 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSCISATarget()
 
 static std::string computeDataLayout(const Triple &TT)
 {
-    return "e-m:e-p:32:32-i32:32-a:0:32-n32-S32";
+    return "e"              // Little endian
+           "-m:e"           // ELF name mangling
+           "-p:32:32"       // 32-bit pointers, 32-bit aligned
+           "-i8:8:8"
+           "-i16:16:16"
+           "-i32:32"        // 32-bit integers, 32-bit aligned
+           "-i64:32"        // 64-bit integers, 32-bit aligned
+           "-a:0:32"        // 32-bit alignment of objects of aggregate type
+           "-n32"           // 32-bit native integer width
+           "-S32";          // 32-bit natural stack alignment
 }
 
 static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM)
@@ -97,7 +104,7 @@ TargetPassConfig *SCISATargetMachine::createPassConfig(PassManagerBase &PM)
 
 void SCISATargetMachine::registerPassBuilderCallbacks(PassBuilder &PB)
 {
-#define GET_PASS_REGISTRY "SCISAPassRegistry.def"
+
 #include "llvm/Passes/TargetPassRegistry.inc"
 
     PB.registerPipelineStartEPCallback(
@@ -107,7 +114,6 @@ void SCISATargetMachine::registerPassBuilderCallbacks(PassBuilder &PB)
         });
     PB.registerPeepholeEPCallback([=](FunctionPassManager &FPM, OptimizationLevel Level) {
         FPM.addPass(SimplifyCFGPass(SimplifyCFGOptions().hoistCommonInsts(true)));
-        FPM.addPass(SCISAASpaceCastSimplifyPass());
     });
     PB.registerScalarOptimizerLateEPCallback(
         [=](FunctionPassManager &FPM, OptimizationLevel Level) {
@@ -145,9 +151,7 @@ void SCISAPassConfig::addMachineSSAOptimization()
 void SCISAPassConfig::addPreEmitPass()
 {
     if (getOptLevel() != CodeGenOptLevel::None) {
-        if (!DisableMIPeephole) {
-            addPass(createSCISAMIPreEmitPeepholePass());
-        }
+        addPass(createSCISAMIPreEmitPeepholePass());
     }
 }
 

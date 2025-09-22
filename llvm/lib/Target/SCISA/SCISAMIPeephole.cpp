@@ -33,6 +33,8 @@
 #include "llvm/Support/Debug.h"
 #include <set>
 
+#define DEBUG_TYPE "scisa-mipeephole"
+
 using namespace llvm;
 
 namespace {

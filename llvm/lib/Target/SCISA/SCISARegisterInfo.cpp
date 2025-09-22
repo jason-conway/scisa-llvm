@@ -69,7 +69,7 @@ bool SCISARegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int 
 
     while (!MI.getOperand(I).isFI()) {
         ++I;
-        assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+        assert(I < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
     }
 
     Register FrameReg = getFrameRegister(MF);

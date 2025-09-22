@@ -9,11 +9,18 @@
 // This file defines all of the SCISA-specific intrinsics.
 //
 //===----------------------------------------------------------------------===//
-class ReadRegIntrinsic<string name>
-  : DefaultAttrsIntrinsic<[llvm_i32_ty], [], [IntrNoMem, IntrSpeculatable, NoUndef<RetIndex>]>,
-    ClangBuiltin<"__scisa_read_reg_" # name>;
 
-// Specialized loads from packet
 let TargetPrefix = "scisa" in {
-  def int_scisa_read_reg_clock : ReadRegIntrinsic<"cyc">;
+
+    def int_scisa_in : Intrinsic<
+        [llvm_i32_ty], // return u32
+        [llvm_ptr_ty, llvm_i32_ty], // (void *, u32)
+        [IntrWriteMem]
+    >;
+
+    def int_scisa_out : Intrinsic<
+        [], // void
+        [llvm_ptr_ty, llvm_i32_ty], // (void *, u32)
+        [IntrReadMem]
+    >;
 }
