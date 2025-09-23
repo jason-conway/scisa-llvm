@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/CallingConv.h"
@@ -80,9 +81,9 @@ SCISATargetLowering::SCISATargetLowering(const TargetMachine &TM, const SCISASub
     setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
     setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
     setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
-    setOperationAction(ISD::CTPOP, MVT::i32, Expand);
-    setOperationAction(ISD::CTTZ, MVT::i32, Expand);
-    setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+    // setOperationAction(ISD::CTPOP, MVT::i32, Legal);
+    // setOperationAction(ISD::CTTZ, MVT::i32, Legal);
+    // setOperationAction(ISD::CTLZ, MVT::i32, Legal);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
 
