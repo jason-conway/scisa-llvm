@@ -84,6 +84,14 @@ public:
     {
         return 12;
     }
+
+    TargetTransformInfo::PopcntSupportKind getPopcntSupport(unsigned TyWidth) const override
+    {
+        if (TyWidth <= 32) {
+            return TTI::PSK_FastHardware;
+        }
+        return TTI::PSK_Software;
+    }
 };
 
 } // end namespace llvm

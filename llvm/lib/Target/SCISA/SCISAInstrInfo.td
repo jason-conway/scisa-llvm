@@ -334,6 +334,29 @@ let Constraints = "$rd = $rs", isAsCheapAsAMove = 1 in {
   >;
 } // Constraints = "$rd = $rs2", isAsCheapAsAMove = 1
 
+
+// MARK: - bit ops
+
+multiclass BIT_OP<string OpcodeStr, SDNode OpNode> {
+  def _rr_32 : InstSCISA<
+    (outs GPR32:$rd),
+    (ins GPR32:$rs),
+    !strconcat(OpcodeStr, "\t$rd, $rs"),
+    [(set GPR32:$rd, (OpNode GPR32:$rs))]
+  >;
+
+  def _ri_32 : InstSCISA<
+    (outs GPR32:$rd),
+    (ins i32imm:$imm),
+    !strconcat(OpcodeStr, "\t$rd, $imm"),
+    [(set GPR32:$rd, (OpNode i32immSExt32:$imm))]
+  >;
+}
+
+defm CLZ  : BIT_OP<"clz", ctlz>;
+defm CTZ  : BIT_OP<"ctz", cttz>;
+defm CNT  : BIT_OP<"cnt", ctpop>;
+
 // MARK: - mov
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, hasSideEffects = 0 in {
@@ -364,7 +387,7 @@ let Uses = [CYC] in {
   >;
 } // Uses = [CYC]
 
-def: Pat<(i32 readcyclecounter), (READ_REG CYC) >;
+def: Pat<(i32 readcyclecounter), (READ_REG CYC)>;
 
 // MARK: - lea
 
