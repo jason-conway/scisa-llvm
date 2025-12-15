@@ -37,8 +37,8 @@ namespace {
 
 class SCISADAGToDAGISel : public SelectionDAGISel {
 
-    /// Subtarget - Keep a pointer to the SCISASubtarget around so that we can
-    /// make the right decision when generating code for different subtargets.
+    // Subtarget - Keep a pointer to the SCISASubtarget around so that we can
+    // make the right decision when generating code for different subtargets.
     const SCISASubtarget *Subtarget;
 
 public:
@@ -71,20 +71,17 @@ private:
     bool selectAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
     bool selectFIAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
 
-    // Node preprocessing cases
-    void preprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I);
-
     // Find constants from a constant structure
     typedef std::vector<unsigned char> val_vec_type;
-    
+
     bool fillGenericConstant(const DataLayout &DL, const Constant *CV, val_vec_type &Vals, uint64_t Offset);
-    
+
     bool fillConstantDataArray(const DataLayout &DL, const ConstantDataArray *CDA, val_vec_type &Vals, int Offset);
-    
+
     bool fillConstantArray(const DataLayout &DL, const ConstantArray *CA, val_vec_type &Vals, int Offset);
-    
+
     bool fillConstantStruct(const DataLayout &DL, const ConstantStruct *CS, val_vec_type &Vals, int Offset);
-    
+
     bool getConstantFieldValue(const GlobalAddressSDNode *Node, uint64_t Offset, uint64_t Size, unsigned char *ByteSeq);
     // Mapping from ConstantStruct global value to corresponding byte-list values
     std::map<const void *, val_vec_type> cs_vals_;
@@ -222,83 +219,6 @@ void SCISADAGToDAGISel::Select(SDNode *Node)
     SelectCode(Node);
 }
 
-void SCISADAGToDAGISel::preprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I)
-{
-    union {
-        uint8_t c[4];
-        uint16_t s;
-        uint32_t i;
-    } new_val; // hold up the constant values replacing loads.
-    
-    bool Replace = false;
-    SDLoc DL(Node);
-    const LoadSDNode *LD = cast<LoadSDNode>(Node);
-    if (!LD->getMemOperand()->getSize().hasValue()) {
-        return;
-    }
-    uint64_t Size = LD->getMemOperand()->getSize().getValue();
-
-    if (!Size || Size > 4 || (Size & (Size - 1)) || !LD->isSimple()) {
-        return;
-    }
-
-    SDNode *LDAddrNode = LD->getOperand(1).getNode();
-    // Match LDAddr against either global_addr or (global_addr + offset)
-    unsigned Op = LDAddrNode->getOpcode();
-    if (Op == ISD::ADD) {
-        SDValue OP1 = LDAddrNode->getOperand(0);
-        SDValue OP2 = LDAddrNode->getOperand(1);
-
-        // We want to find the pattern global_addr + offset
-        SDNode *OP1N = OP1.getNode();
-        if (OP1N->getOpcode() <= ISD::BUILTIN_OP_END || OP1N->getNumOperands() == 0) {
-            return;
-        }
-
-        LLVM_DEBUG(dbgs() << "Check candidate load: "; LD->dump(); dbgs() << '\n');
-
-        const GlobalAddressSDNode *GADN = dyn_cast<GlobalAddressSDNode>(OP1N->getOperand(0).getNode());
-        const ConstantSDNode *CDN = dyn_cast<ConstantSDNode>(OP2.getNode());
-        if (GADN && CDN) {
-            Replace = getConstantFieldValue(GADN, CDN->getZExtValue(), Size, new_val.c);
-        }
-    }
-    else if (LDAddrNode->getOpcode() > ISD::BUILTIN_OP_END && LDAddrNode->getNumOperands() > 0) {
-        LLVM_DEBUG(dbgs() << "Check candidate load: "; LD->dump(); dbgs() << '\n');
-
-        SDValue OP1 = LDAddrNode->getOperand(0);
-        if (const GlobalAddressSDNode *GADN = dyn_cast<GlobalAddressSDNode>(OP1.getNode())) {
-            Replace = getConstantFieldValue(GADN, 0, Size, new_val.c);
-        }
-    }
-
-    if (!Replace) {
-        return;
-    }
-
-    // replacing the old with a new value
-    uint64_t Val = new_val.i;
-    if (Size == 1) {
-        Val = new_val.c[0];
-    }
-    else if (Size == 2) {
-        Val = new_val.s;
-    }
-
-    LLVM_DEBUG(dbgs() << "Replacing load of size " << Size << " with constant " << Val << '\n');
-    SDValue NVal = CurDAG->getConstant(Val, DL, LD->getValueType(0));
-
-    // After replacement, the current node is dead, we need to
-    // go backward one step to make iterator still work
-    I--;
-    SDValue From[] = { SDValue(Node, 0), SDValue(Node, 1) };
-    SDValue To[] = { NVal, NVal };
-    CurDAG->ReplaceAllUsesOfValuesWith(From, To, 2);
-    I++;
-    // It is safe to delete node now
-    CurDAG->DeleteNode(Node);
-}
-
 void SCISADAGToDAGISel::PreprocessISelDAG()
 {
     // Iterate through all nodes, interested in the following case:
@@ -312,7 +232,77 @@ void SCISADAGToDAGISel::PreprocessISelDAG()
         SDNode *Node = &*I++;
         unsigned Opcode = Node->getOpcode();
         if (Opcode == ISD::LOAD) {
-            preprocessLoad(Node, I);
+            union ConstantValue {
+                uint8_t U8[4];
+                uint16_t U16;
+                uint32_t U32;
+            } CV;
+
+            bool Replace = false;
+            SDLoc DL(Node);
+            const LoadSDNode *LD = cast<LoadSDNode>(Node);
+            if (!LD->getMemOperand()->getSize().hasValue()) {
+                continue;
+            }
+            auto Size = LD->getMemOperand()->getSize().getValue();
+            if (!Size || Size > 4 || (Size & (Size - 1)) || !LD->isSimple()) {
+                continue;
+            }
+
+            // Match LDAddr against either global_addr or (global_addr + offset)
+            SDNode *LDAddrNode = LD->getOperand(1).getNode();
+            unsigned Op = LDAddrNode->getOpcode();
+            if (Op == ISD::ADD) {
+                SDValue OP1 = LDAddrNode->getOperand(0);
+                SDValue OP2 = LDAddrNode->getOperand(1);
+
+                // Find global_addr + offset pattern
+                SDNode *OP1N = OP1.getNode();
+                if (OP1N->getOpcode() <= ISD::BUILTIN_OP_END || OP1N->getNumOperands() == 0) {
+                    continue;
+                }
+
+                LLVM_DEBUG(dbgs() << "Check candidate load: "; LD->dump(); dbgs() << '\n');
+
+                const GlobalAddressSDNode *GADN = dyn_cast<GlobalAddressSDNode>(OP1N->getOperand(0).getNode());
+                const ConstantSDNode *CDN = dyn_cast<ConstantSDNode>(OP2.getNode());
+                if (GADN && CDN) {
+                    Replace = getConstantFieldValue(GADN, CDN->getZExtValue(), Size, CV.U8);
+                }
+            }
+            else if (LDAddrNode->getOpcode() > ISD::BUILTIN_OP_END && LDAddrNode->getNumOperands() > 0) {
+                LLVM_DEBUG(dbgs() << "Check candidate load: "; LD->dump(); dbgs() << '\n');
+
+                SDValue OP1 = LDAddrNode->getOperand(0);
+                if (const GlobalAddressSDNode *GADN = dyn_cast<GlobalAddressSDNode>(OP1.getNode())) {
+                    Replace = getConstantFieldValue(GADN, 0, Size, CV.U8);
+                }
+            }
+
+            if (!Replace) {
+                continue;
+            }
+
+            // Replace with constant
+            uint32_t Val = CV.U32;
+            if (Size == sizeof(uint8_t)) {
+                Val = CV.U8[0];
+            }
+            else if (Size == sizeof(uint16_t)) {
+                Val = CV.U16;
+            }
+
+            LLVM_DEBUG(dbgs() << "Replacing load of size " << Size << " with constant " << Val << '\n');
+            SDValue NVal = CurDAG->getConstant(Val, DL, LD->getValueType(0));
+
+            // After replacement, the current node is dead, we need to go backward one step to make iterator work
+            I--;
+            SDValue From[] = { SDValue(Node, 0), SDValue(Node, 1) };
+            SDValue To[] = { NVal, NVal };
+            CurDAG->ReplaceAllUsesOfValuesWith(From, To, 2);
+            I++;
+            // Now safe to delete node
+            CurDAG->DeleteNode(Node);
         }
     }
 }
